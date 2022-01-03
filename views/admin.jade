@@ -1,0 +1,7 @@
+extends layout
+
+block content
+	ul
+		each user in users
+			li= user.username
+				a(href='/admin/#{user._id}') go 

@@ -1,0 +1,33 @@
+extends layout
+
+block content
+    h1= user.username
+    div
+      form(method='POST' action='/user/#{user._id}?_method=PUT')
+        div
+          input(type='text' name="username" minlength='1' maxlength='20' size='20' value='#{user.username}')
+          button(type='submit') change name
+    hr
+    div
+      form(action='/user/#{user._id}/img' method='POST' enctype='multipart/form-data')
+        div
+          label(for='img') Image Title
+          input#img(type='text' placeholder='img' value='' name='img' required='')     
+        div
+          label(for='img') Upload Image
+          input#img(type='file' name='img' value='' required='')
+        div
+          button(type='submit') Submit
+    hr
+    h1 Uploaded Images
+    div
+      ul
+        each item in user.images
+          li
+            img(src="data:image/png;base64, #{item.img.data.toString('base64')}")
+            div
+              form(method='POST' action='/user/#{item._id}?_method=DELETE')
+                button(type='submit') Delete
+    div
+      form(method='POST' action='/user?_method=DELETE')
+        button(type='submit') Delete all

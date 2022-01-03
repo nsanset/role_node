@@ -1,0 +1,41 @@
+extends layout
+
+block content
+    h1 To Upload Image on mongoDB
+    hr
+    div
+      form(action='/mod' method='POST' enctype='multipart/form-data')
+        div
+          label(for='name') Image Title
+          input#name(type='text' placeholder='Name' value='' name='name' required='')
+        div
+          label(for='desc') desc
+          textarea#desc(type='text' placeholder='desc' value='' name='desc' required='')         
+        div
+          label(for='image') Upload Image
+          input#image(type='file' name='image' value='' required='')
+        div
+          button(type='submit') Submit
+    hr
+    h1 Uploaded Images
+    div
+      ul
+        each item in items
+          li
+            div
+              form(method='POST' action='/api/#{item._id}?_method=PUT')
+                div
+                  input(type='text' name="name" minlength='1' maxlength='20' size='20' value='#{item.name}')
+                  button(type='submit') change name
+            div
+              form(method='POST' action='/api/#{item._id}?_method=PUT')
+                div
+                  input(type='text' name="desc" minlength='1' maxlength='20' size='20' value='#{item.desc}')
+                  button(type='submit') change desc
+            img(src="data:image/png;base64, #{item.img.data.toString('base64')}")
+            div
+              form(method='POST' action='/api/#{item._id}?_method=DELETE')
+                button(type='submit') Delete
+          div
+            form(method='POST' action='/api?_method=DELETE')
+              button(type='submit') Delete all
