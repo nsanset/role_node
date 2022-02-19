@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema({
     type: String
   },
   comment: {
-
+    type: String
   },
   date: {
     type: Date,
@@ -131,12 +131,16 @@ const userSchema = new mongoose.Schema({
   avatars: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Avatar'
+  }],
+  files: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SingleFile'
   }]
 })
-userSchema.pre('save', function(next) {
-  this.status = 'active';
-  next();
-});
+// userSchema.pre('save', function(next) {
+//   this.status = 'active';
+//   next();
+// });
 // userSchema.pre('save', function(next) {
 //   this.exp = '';
 //   next();

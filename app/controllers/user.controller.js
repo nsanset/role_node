@@ -15,6 +15,8 @@ const Eligiibity = require('../models/eligiibity.model');
 const Drug = require('../models/drug.model');
 const Another = require('../models/another.model');
 const Mvr = require('../models/mvr.model');
+const GridFile = require('../models/gridfile.model');
+const SingleFile = require('../models/single.model');
 var fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
@@ -50,6 +52,7 @@ exports.userBoard = (req, res) => {
     .populate('drugs')
     .populate('anothers')
     .populate('mvrs')
+    .populate('files')
     .exec (function (err, user) {
       if (err) return res.status(500).send("There was a problem finding the user.");
       if (!user) return res.status(404).send("No user found.");
@@ -72,11 +75,11 @@ exports.userAvatar = async (req, res) => {
       })
       .toFormat('jpeg')
       .jpeg({ quality: 65 })
-      .toFile(path.join(__dirname, '..', '..', 'uploads', req.file.filename))
+      .toFile(path.join(__dirname, '..', '..', 'uploads', req.file.filename + 'compr'))
 
   const avatar = new Avatar({
     avatar: {
-      data: fs.readFileSync(path.join(__dirname, '..', '..', 'uploads', req.file.filename)),
+      data: fs.readFileSync(path.join(__dirname, '..', '..', 'uploads', req.file.filename + 'compr')),
       contentType: 'image/png'
     },
     user: id
@@ -1056,6 +1059,91 @@ exports.userDeleteAllAnother = (req, res) => {
 
 
 
+//pdf
+exports.userfilePdfUpl = async (req, res, next) => {
+      try{
+        const file = new SingleFile({
+            fileName: req.file.originalname,
+            filePath: req.file.path,
+            fileType: req.file.mimetype,
+            fileSize: fileSizeFormatter(req.file.size, 2) // 0.00
+        });
+        await file.save();
+        
+        const id = req.params.id;
+        const related = await User.findById(id);
+        related.files.push(file);
+        await related.save(function(err) {
+        if(err) {console.log(err)}
+            // res.status(200).send("user Content.");
+        })
+        res.status(200).send('File Uploaded Successfully');
+    }catch(error) {
+        res.status(400).send(error.message);
+    }
+};
+
+exports.userDeleteFilePdf = (req, res) => {
+    try {
+      SingleFile.findOne({_id: req.params.id}, function (error, pdf){
+        if (error) {
+          res.send(error);
+        }
+        else if (!pdf) {
+          res.status(200).send("deleted");
+        } else {
+          pdf.remove();
+          res.status(200).send("deleted");
+        }
+      });
+    } catch (e) {
+      console.log(e)
+    }
+
+}
+exports.userDeleteFilePdfFromFolder = (req, res) => {
+    try {
+      var fileName = req.params.name;
+
+      fs.unlink(path.join(__dirname, '..', '..', 'uploads', fileName), function(err) {
+         if (err) {console.log(err)}
+          console.log('delete')
+      });
+    } catch (e) {
+      console.log(e)
+    }
+
+}
+
+exports.userGetPdf = async (req, res, next) => {
+    try {
+      var options = {
+          root: path.join(__dirname, '..', '..', 'uploads')
+      };
+      var fileName = req.params.name;
+      res.sendFile(fileName, options, function (err) {
+          if (err) {
+              next(err);
+          } else {}
+      });
+    } catch (e) {
+      console.log(e)
+    }
+}
+
+const fileSizeFormatter = (bytes, decimal) => {
+    if(bytes === 0){
+        return '0 Bytes';
+    }
+    const dm = decimal || 2;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'YB', 'ZB'];
+    const index = Math.floor(Math.log(bytes) / Math.log(1000));
+    return parseFloat((bytes / Math.pow(1000, index)).toFixed(dm)) + ' ' + sizes[index];
+
+}
+
+
+
 
 exports.adminBoard = (req, res) => {
   User.find({ }, function(err, users) {
@@ -1086,6 +1174,7 @@ exports.adminUser = (req, res) => {
         .populate('drugs')
         .populate('anothers')
         .populate('mvrs')
+        .populate('files')
         .lean().exec(function (err, user) {
         if (err) return console.error(err)
         try {

@@ -17,6 +17,21 @@ var storage = multer.diskStorage({
  
 var upload = multer({ storage: storage });
 
+var storagePdf = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads')
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.fieldname + '-' + Date.now() + '.pdf')
+    }
+});
+
+
+var uploadPdf = multer({ 
+    storage: storagePdf
+});
+
+
 module.exports = function(app) {
   app.use(function(req, res, next) {
     res.header(
@@ -130,6 +145,15 @@ module.exports = function(app) {
   app.post("/user/another/:id/another", [authJwt.verifyToken], upload.single('another'), controller.userAnotherUpl);
   app.delete("/user/another/:id", [authJwt.verifyToken], controller.userDeleteAnother);
   app.delete("/user/another", [authJwt.verifyToken], controller.userDeleteAllAnother);
+
+
+  //pdf
+  app.post("/user/filePdf/:id", [authJwt.verifyToken], uploadPdf.single('file'), controller.userfilePdfUpl);
+  app.delete("/user/filePdf/:id", [authJwt.verifyToken], controller.userDeleteFilePdf);
+  app.get("/all/uploads/:name", controller.userGetPdf);
+  app.delete("/all/uploads/:name", controller.userDeleteFilePdfFromFolder);
+
+
 
 
 

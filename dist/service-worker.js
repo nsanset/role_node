@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.f99ae7e674bd0386716eb184ca72d43b.js"
+  "/precache-manifest.a6936f9633cb74f95e52f644aa422f2d.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "role_vue"});
