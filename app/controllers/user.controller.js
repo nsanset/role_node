@@ -15,7 +15,6 @@ const Eligiibity = require('../models/eligiibity.model');
 const Drug = require('../models/drug.model');
 const Another = require('../models/another.model');
 const Mvr = require('../models/mvr.model');
-const GridFile = require('../models/gridfile.model');
 const SingleFile = require('../models/single.model');
 var fs = require('fs');
 const path = require('path');
