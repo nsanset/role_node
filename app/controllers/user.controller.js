@@ -16,6 +16,9 @@ const Drug = require('../models/drug.model');
 const Another = require('../models/another.model');
 const Mvr = require('../models/mvr.model');
 const SingleFile = require('../models/single.model');
+const Safety = require('../models/safetyRecords.model');
+const SafetyImg = require('../models/safetyImg.model');
+const Insurance = require('../models/insurance.model');
 var fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
@@ -52,6 +55,9 @@ exports.userBoard = (req, res) => {
     .populate('anothers')
     .populate('mvrs')
     .populate('files')
+    .populate('safetys')
+    .populate('insurances') 
+    // .populate('safetysImgs')
     .exec (function (err, user) {
       if (err) return res.status(500).send("There was a problem finding the user.");
       if (!user) return res.status(404).send("No user found.");
@@ -143,31 +149,25 @@ exports.userPut = (req, res, next) => {
   });
 };
 
+//put safety
+exports.userPutSafety = (req, res, next) => {
+  Safety.findByIdAndUpdate(req.params.id, {$set: req.body}, function (err) {
+    if (err) return next (err);
+    Safety.find({})
+    res.sendStatus(200)
+  });
+};
 
 
-//driver license
-// exports.userImgUpl = async (req, res) => {
-//   const id = req.params.id;
-//   const image = new Image({
-//     img: {
-//       data: fs.readFileSync(path.join(__dirname, '..', '..', 'uploads', req.file.filename)),
-//       contentType: 'image/png'
-//     },
-//     user: id
-//   })
-//   try {
-//     fs.unlinkSync(path.join(__dirname, '..', '..', 'uploads', req.file.filename))
-//   } catch (error) {
-//     console.log(error)
-//   } 
-//   await image.save();
-//   const related = await User.findById(id);
-//   related.images.push(image);
-//   await related.save(function(err) {
-//   if(err) {console.log(err)}
-//       res.status(200).send("user Content.");
-//   })
-// };
+//put Insurance Endorsement 
+exports.userPutInsurance = (req, res, next) => {
+  Insurance.findByIdAndUpdate(req.params.id, {$set: req.body}, function (err) {
+    if (err) return next (err);
+    Insurance.find({})
+    res.sendStatus(200)
+  });
+};
+
 
 
 exports.userImgUpl = async (req, res) => {
@@ -239,7 +239,8 @@ exports.userDeleteImg = (req, res) => {
 // }
 
 exports.userDeleteAllImg = (req, res) => {
-    Image.deleteMany({ }, function(err, images) {
+  const id = req.params.id;
+    Image.deleteMany({id}, function(err, images) {
     if (err) {
       res.send(err);
     } else {
@@ -1143,17 +1144,223 @@ const fileSizeFormatter = (bytes, decimal) => {
 
 
 
+//safety
+exports.safety = async (req, res) => {
+  const id = req.params.id;
+  const safety = new Safety({
+    enteredBy: req.body.enteredBy,
+    safetyDate: req.body.safetyDate,
+    driver: req.body.driver,
+    carrier: req.body.carrier,
+    unit: req.body.unit,
+    location: req.body.location,
+    vehicleDamage: req.body.vehicleDamage,
+    driversFault: req.body.driversFault,
+    description: req.body.description,
+    user: id
+  })
+  await safety.save();
+  const related = await User.findById(id);
+  related.safetys.push(safety);
+  await related.save(function(err) {
+    if(err) {console.log(err)}
+    res.status(200).send("safety ok");
+  })          
+};
 
-exports.adminBoard = (req, res) => {
-  User.find({ }, function(err, users) {
-    if (err) {
-      res.send(err);
+exports.safetyDelete = (req, res) => {
+  Safety.findOne({_id: req.params.id}, function (error, safety){
+    if (error) {
+      res.send(error);
+    }
+    else if (!safety) {
+      res.status(200).send("deleted");
     } else {
-      // res.render('admin', { users: users });
-      res.status(200).send(users);
+      safety.remove();
+      res.status(200).send("deleted");
     }
   });
+}
+
+
+// safety image
+exports.safetyImg = async (req, res) => {
+  const id = req.params.id;
+  const file = await fs.readFileSync(path.join(__dirname, '..', '..', 'uploads', req.file.filename))
+  const data = await sharp(file)
+      .resize({
+        width: 1280,
+        height: 720
+      })
+      .toFormat('jpeg')
+      .jpeg({ quality: 50 })
+      .toFile(path.join(__dirname, '..', '..', 'uploads', req.file.filename + 'compr'))
+      .catch(err => { console.log(err) });
+ 
+  const safetyImg = new SafetyImg({
+    safetyImg: {
+      data: fs.readFileSync(path.join(__dirname, '..', '..', 'uploads', req.file.filename + 'compr')),
+      contentType: 'image/png'
+    },
+    ref: id
+  })
+
+  await safetyImg.save()
+
+  fs.unlink(path.join(__dirname, '..', '..', 'uploads', req.file.filename), function(err) {
+     if (err) {console.log(err)}
+  });
+  fs.unlink(path.join(__dirname, '..', '..', 'uploads', req.file.filename + 'compr'), function(err) {
+     if (err) {console.log(err)}
+  });
+
+  const related = await Safety.findById(id);
+  related.safetysImgs.push(safetyImg);
+  await related.save(function (err) {
+  if(err) {
+    console.log(err)
+  }
+  else {
+    res.status(200).send("safety image uploads")
+   }
+  })
 };
+
+
+
+exports.safetyImgDelete = (req, res) => {
+  SafetyImg.findOne({_id: req.params.id}, function (error, safetyImg){
+    if (error) {
+      res.send(error);
+    }
+    else if (!safetyImg) {
+      res.status(200).send("deleted");
+    } else {
+      safetyImg.remove();
+      res.status(200).send("deleted");
+    }
+  });
+}
+
+
+//Insurance Endorsement 
+exports.insurance = async (req, res) => {
+  const id = req.params.id;
+  const insurance = new Insurance({
+    driver: req.body.driver,
+    insurance1: req.body.insurance1,
+    insurance2: req.body.insurance2,
+    insurance3: req.body.insurance3,
+    insurance4: req.body.insurance4,
+    insurance5: req.body.insurance5,
+    insurance6: req.body.insurance6,
+    insurance7: req.body.insurance7,
+    user: id
+  })
+  await insurance.save();
+  const related = await User.findById(id);
+  related.insurances.push(insurance);
+  await related.save(function(err) {
+    if(err) {console.log(err)}
+    res.status(200).send("insurance ok");
+  })          
+};
+
+exports.insuranceDelete = (req, res) => {
+  Insurance.findOne({_id: req.params.id}, function (error, insurance){
+    if (error) {
+      res.send(error);
+    }
+    else if (!insurance) {
+      res.status(200).send("deleted");
+    } else {
+      insurance.remove();
+      res.status(200).send("deleted");
+    }
+  });
+}
+
+
+exports.adminBoard = (req, res) => {
+      User.find()        
+        // .populate('images')
+        // .populate('avatars')
+        // .populate('medicals')
+        // .populate('securitys')
+        // .populate('employments')
+        // .populate('w4forms')
+        // .populate('confidentials')
+        // .populate('owneds')
+        // .populate('expensess')
+        // .populate('desposits')
+        // .populate('credits')
+        // .populate('eligiibitys')
+        // .populate('drugs')
+        // .populate('anothers')
+        // .populate('mvrs')
+        // .populate('files')
+        .populate('safetys') 
+        .populate('insurances') 
+        // .populate({ 
+        //     path: 'safetys',
+        //     populate: {
+        //       path: 'safetysImgs'
+        //     } 
+        // }) 
+        .lean().exec(function (err, user) {
+        if (err) return console.error(err)
+        try {
+          res.status(200).send(user);
+        } catch (error) {
+            console.log("errror getting results")
+            console.log(error)
+        } 
+    })
+};
+
+exports.adminBoardSafety = (req, res) => {
+      Safety.find()        
+        // .populate('safetysImgs') 
+        .lean().exec(function (err, user) {
+        if (err) return console.error(err)
+        try {
+          res.status(200).send(user);
+        } catch (error) {
+            console.log("errror getting results")
+            console.log(error)
+        } 
+    })
+};
+
+exports.adminBoardSafetyImg = (req, res) => {
+  var id = req.params.id
+      SafetyImg.findById(id)        
+        // .populate('safetysImgs') 
+        .lean().exec(function (err, user) {
+        if (err) return console.error(err)
+        try {
+          res.status(200).send(user);
+        } catch (error) {
+            console.log("errror getting results")
+            console.log(error)
+        } 
+    })
+};
+
+
+exports.adminBoardInsurance = (req, res) => {
+      Insurance.find()        
+        .lean().exec(function (err, user) {
+        if (err) return console.error(err)
+        try {
+          res.status(200).send(user);
+        } catch (error) {
+            console.log("errror getting results")
+            console.log(error)
+        } 
+    })
+};
+
 
 exports.adminUser = (req, res) => {
     var id = req.params.id
@@ -1174,6 +1381,9 @@ exports.adminUser = (req, res) => {
         .populate('anothers')
         .populate('mvrs')
         .populate('files')
+        .populate('safetys')
+        .populate('insurances') 
+        // .populate('safetysImgs')
         .lean().exec(function (err, user) {
         if (err) return console.error(err)
         try {
@@ -1184,6 +1394,7 @@ exports.adminUser = (req, res) => {
         } 
     })
 };
+
 
 
 exports.moderatorBoard =  (req, res) => {

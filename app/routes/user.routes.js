@@ -56,10 +56,15 @@ module.exports = function(app) {
   //put user data
   app.put("/user/:id", [authJwt.verifyToken], controller.userPut);
 
+  app.put("/user/safety/:id", [authJwt.verifyToken], controller.userPutSafety);
+
+  app.put("/user/insurance/:id", [authJwt.verifyToken], controller.userPutInsurance);
+
+
   //driver licence
   app.post("/user/img/:id/img", [authJwt.verifyToken], upload.single('img'), controller.userImgUpl);
   app.delete("/user/img/:id", [authJwt.verifyToken], controller.userDeleteImg);
-  app.delete("/user/img", [authJwt.verifyToken], controller.userDeleteAllImg);
+  app.delete("/user/img/", [authJwt.verifyToken], controller.userDeleteAllImg);
 
   //medical card
   app.post("/user/medical/:id/medical", [authJwt.verifyToken], upload.single('medicalCard'), controller.userMedicalUpl);
@@ -153,6 +158,20 @@ module.exports = function(app) {
   app.get("/all/uploads/:name", controller.userGetPdf);
   app.delete("/all/uploads/:name", controller.userDeleteFilePdfFromFolder);
 
+  
+  //safety records
+  app.post("/user/safety/:id/safety", [authJwt.verifyToken], controller.safety);
+  app.delete("/user/safety/:id", [authJwt.verifyToken], controller.safetyDelete);
+
+
+  //safety image
+  app.post("/user/safetyImg/:id/safetyImg", [authJwt.verifyToken], upload.single('safetyImg'), controller.safetyImg);
+  app.delete("/user/safetyImg/:id", [authJwt.verifyToken], controller.safetyImgDelete);
+
+
+  //Insurance Endorsement
+  app.post("/user/insurance/:id/insurance", [authJwt.verifyToken], controller.insurance);
+  app.delete("/user/insurance/:id", [authJwt.verifyToken], controller.insuranceDelete);
 
 
 
@@ -168,7 +187,23 @@ module.exports = function(app) {
     "/admin",
     [authJwt.verifyToken, authJwt.isAdmin],
     controller.adminBoard
+  );  
+  app.get(
+    "/admin/safety",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    controller.adminBoardSafety
   );
+    app.get(
+    "/admin/insurance",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    controller.adminBoardInsurance
+  );
+    app.get(
+    "/admin/safety/:id",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    controller.adminBoardSafetyImg
+  );
+
     app.get(
     "/admin/:id",
     [authJwt.verifyToken, authJwt.isAdmin],

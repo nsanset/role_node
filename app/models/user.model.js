@@ -66,6 +66,9 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  colorTheme: {
+    type: String
+  },
   roles: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -135,6 +138,14 @@ const userSchema = new mongoose.Schema({
   files: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'SingleFile'
+  }],
+  safetys: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Safety'
+  }],
+  insurances: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Insurance'
   }]
 })
 // userSchema.pre('save', function(next) {
